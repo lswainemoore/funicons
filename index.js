@@ -1,9 +1,10 @@
 $(document).ready(function() {
   var link = $('#fav');
 
+  // swap favicon color on mouseover
+  // see: https://stackoverflow.com/a/43646435
   $('.split > div').each(function() {
     $(this).mouseover(function() {
-      console.log(solidSVG($(this).attr('id')));
       link.attr('href', solidSVG($(this).attr('id')));
     });
   });
