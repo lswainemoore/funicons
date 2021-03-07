@@ -1,12 +1,8 @@
 $(document).ready(function() {
-  var link = $('#fav');
 
-  var state = {
-    mousePos: {
-      x: null,
-      y: null,
-    },
-  };
+  // SHARED
+
+  var link = $('#fav');
 
   var setSVG = (s) => {
     link.attr('href', s);
@@ -20,14 +16,6 @@ $(document).ready(function() {
     setSVG(textSVG(text));
   };
 
-  // swap favicon color on mouseover
-  // see: https://stackoverflow.com/a/43646435
-  $('.split > div').each(function() {
-    $(this).mouseover(function(e) {
-      setSVGSolidColor($(this).attr('id'));
-    });
-  });
-
   var SVG = (inside) => {
     return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16">${inside}</svg>`
   };
@@ -39,6 +27,18 @@ $(document).ready(function() {
   var textSVG = (text) => {
     return SVG(`<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">${text}</text>`);
   };
+
+  // DIVIDED
+
+  // swap favicon color on mouseover
+  // see: https://stackoverflow.com/a/43646435
+  $('.split > div').each(function() {
+    $(this).mouseover(function(e) {
+      setSVGSolidColor($(this).attr('id'));
+    });
+  });
+
+  // BOOTY
 
   class Point {
     constructor (x, y) {
@@ -104,10 +104,10 @@ $(document).ready(function() {
 
   var pctToWarmth = (pct) => {
     if (pct > .5) {
-      return `rgba(255, 0, 0, ${cubic(2 * (pct - .5))})`;
+      return `rgba(0, 0, 255, ${cubic(2 * (pct - .5))})`;
     }
     else {
-      return `rgba(0, 0, 255, ${cubic(2 * .5 - pct)})`;
+      return `rgba(255, 0, 0, ${cubic(2 * .5 - pct)})`;
     }
   };
 
@@ -135,5 +135,97 @@ $(document).ready(function() {
       booty().css('opacity', 1);
     });
 
+  // BOUNCING BALL
+
+  var ball = {
+    pos: {
+      x: .5,
+      y: .5
+    },
+    vel: {
+      x: 0,
+      y: 0
+    },
+    acc: {
+      x: 0,
+      y: -.02
+    }
+  };
+
+  const bounceFactor = .95;
+  const dragFactor = .99;
+  const radius = .1;
+  const windowSize = 400;
+
+  var interval;
+
+
+
+  var drawBall = (scale) => {
+    $('.ball').css('left', ball.pos.x * scale);
+    $('.ball').css('bottom', ball.pos.y * scale);
+  };
+
+  var drawBallSVG = () => {
+    setSVG(SVG(`<circle cx="${ball.pos.x * 16 + radius}" cy="${16 - (ball.pos.y * 16 + radius)}" r="${radius * 16}"></circle>`));
+  }
+
+  var moveBall = (delta) => {
+    for (dir of ['x', 'y']) {
+      ball.vel[dir] += delta * ball.acc[dir];
+      ball.vel[dir] = dragFactor * ball.vel[dir];
+      ball.pos[dir] += delta * ball.vel[dir];
+
+      // collision
+      if ((ball.pos[dir] + radius) > 1 || ball.pos[dir] < 0) {
+        ball.pos[dir] = Math.max(Math.min(ball.pos[dir], 1), 0);
+        ball.vel[dir] = -1 * bounceFactor * ball.vel[dir];
+      }
+    }
+  };
+
+  $('.bouncing')
+    .mouseover(function() {
+      var clicking = false;
+      var mousedownLoc = {
+        x: null,
+        y: null
+      };
+      $(this).mouseleave(function() {
+        clearInterval(interval);
+        interval = undefined;
+      });
+
+      // TODO add an arrow (e.g. like an arcade putting game)
+      // which goes in here.
+      // $(this).mousemove((e) => {
+      //   if (!clicking) {
+      //     return;
+      //   }
+      //   var dist = Math.sqrt(Math.pow(mousedownLoc.x - e.pageX, 2) + Math.pow(mousedownLoc.y - e.pageY, 2))
+      //   console.log(dist);
+      // });
+
+      $(this).mousedown(function(e) {
+        clicking = true;
+        mousedownLoc.x = e.pageX;
+        mousedownLoc.y = e.pageY;
+      });
+      $(this).mouseup(function(e) {
+        clicking = false;
+
+        ball.vel.x = (mousedownLoc.x - e.pageX) / windowSize;
+        ball.vel.y = (e.pageY - mousedownLoc.y) / windowSize;
+      });
+      if (!interval) {
+        interval = setInterval(function(){
+          if (!clicking) {
+            moveBall(.1);
+            drawBall(windowSize);
+            drawBallSVG();
+          }
+        }, 30);
+      }
+    });
 });
 
