@@ -28,6 +28,7 @@ $(document).ready(function() {
     return SVG(`<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">${text}</text>`);
   };
 
+
   // DIVIDED
 
   // swap favicon color on mouseover
@@ -37,6 +38,7 @@ $(document).ready(function() {
       setSVGSolidColor($(this).attr('id'));
     });
   });
+
 
   // BOOTY
 
@@ -135,6 +137,7 @@ $(document).ready(function() {
       booty().css('opacity', 1);
     });
 
+
   // BOUNCING BALL
 
   var ball = {
@@ -152,14 +155,18 @@ $(document).ready(function() {
     }
   };
 
+  // speed lost on walls
   const bounceFactor = .95;
+
+  // speed lost just with time (otherwise rolls for a long time)
   const dragFactor = .99;
+
   const radius = .1;
   const windowSize = 400;
 
-  var interval;
-
-
+  // keep track of whether we're currently
+  // looping, so we can cancel on mouseexit
+  var intervalLoop;
 
   var drawBall = (scale) => {
     $('.ball').css('left', ball.pos.x * scale);
@@ -176,7 +183,7 @@ $(document).ready(function() {
       ball.vel[dir] = dragFactor * ball.vel[dir];
       ball.pos[dir] += delta * ball.vel[dir];
 
-      // collision
+      // collision with wall
       if ((ball.pos[dir] + radius) > 1 || ball.pos[dir] < 0) {
         ball.pos[dir] = Math.max(Math.min(ball.pos[dir], 1), 0);
         ball.vel[dir] = -1 * bounceFactor * ball.vel[dir];
@@ -186,14 +193,19 @@ $(document).ready(function() {
 
   $('.bouncing')
     .mouseover(function() {
+
+      // are we clicking?
       var clicking = false;
+      // where we started a click.
       var mousedownLoc = {
         x: null,
         y: null
       };
+
+      // stop animating on exit
       $(this).mouseleave(function() {
-        clearInterval(interval);
-        interval = undefined;
+        clearInterval(intervalLoop);
+        intervalLoop = undefined;
       });
 
       // TODO add an arrow (e.g. like an arcade putting game)
@@ -217,8 +229,11 @@ $(document).ready(function() {
         ball.vel.x = (mousedownLoc.x - e.pageX) / windowSize;
         ball.vel.y = (e.pageY - mousedownLoc.y) / windowSize;
       });
-      if (!interval) {
-        interval = setInterval(function(){
+
+      // don't start looping if we somehow exited without clearing.
+      // that would make it go double speed.
+      if (!intervalLoop) {
+        intervalLoop = setInterval(function(){
           if (!clicking) {
             moveBall(.1);
             drawBall(windowSize);
